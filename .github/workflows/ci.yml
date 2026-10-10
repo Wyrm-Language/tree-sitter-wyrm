@@ -1,0 +1,26 @@
+name: CI
+
+on:
+  push:
+    branches: [main]
+  pull_request:
+
+jobs:
+  test:
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v4
+      - uses: actions/setup-node@v4
+        with:
+          node-version: 22
+      - name: Install the tree-sitter CLI
+        # In its own prefix, so the root package's install script (node binding) doesn't run.
+        run: |
+          npm install --prefix "$RUNNER_TEMP/ts" tree-sitter-cli@0.25.10
+          echo "$RUNNER_TEMP/ts/node_modules/.bin" >> "$GITHUB_PATH"
+      - name: Generated parser is up to date
+        run: tree-sitter generate && git diff --exit-code -- src
+      - name: Corpus tests
+        run: tree-sitter test
+      - name: Highlight query compiles
+        run: tree-sitter query queries/highlights.scm test/corpus/wyrm.txt > /dev/null

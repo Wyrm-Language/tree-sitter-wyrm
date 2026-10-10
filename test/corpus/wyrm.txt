@@ -1,0 +1,517 @@
+========================================
+layout: nested blocks and dedents
+========================================
+
+if a:
+    if b:
+        x
+    y
+z
+
+----------------------------------------
+
+(source_file
+  (expression_statement
+    (if_statement
+      (identifier)
+      (block
+        (expression_statement
+          (if_statement
+            (identifier)
+            (block
+              (expression_statement
+                (identifier)))))
+        (expression_statement
+          (identifier)))))
+  (expression_statement
+    (identifier)))
+
+========================================
+layout: else and elif continue the if
+========================================
+
+if a:
+    b
+elif c:
+    d
+else:
+    e
+f
+
+----------------------------------------
+
+(source_file
+  (expression_statement
+    (if_statement
+      (identifier)
+      (block
+        (expression_statement
+          (identifier)))
+      (elif_clause
+        (identifier)
+        (block
+          (expression_statement
+            (identifier))))
+      (else_clause
+        (block
+          (expression_statement
+            (identifier))))))
+  (expression_statement
+    (identifier)))
+
+========================================
+layout: one-liner block
+========================================
+
+if a: b
+c
+
+----------------------------------------
+
+(source_file
+  (expression_statement
+    (if_statement
+      (identifier)
+      (block
+        (expression_statement
+          (identifier)))))
+  (expression_statement
+    (identifier)))
+
+========================================
+layout: blank and comment lines do not change indentation
+========================================
+
+fn f():
+    a
+
+    # note
+
+    b  # trailing
+c
+
+----------------------------------------
+
+(source_file
+  (function_definition
+    (identifier)
+    (parameters)
+    (block
+      (expression_statement
+        (identifier))
+      (comment)
+      (expression_statement
+        (identifier))))
+  (comment)
+  (expression_statement
+    (identifier)))
+
+========================================
+layout: newlines inside brackets are whitespace
+========================================
+
+x := [1,
+  2,
+  3]
+y := f(a,
+  b)
+
+----------------------------------------
+
+(source_file
+  (assignment
+    (identifier)
+    (array
+      (integer)
+      (integer)
+      (integer)))
+  (assignment
+    (identifier)
+    (call
+      (identifier)
+      (arguments
+        (identifier)
+        (identifier)))))
+
+========================================
+layout: brace block ignores indentation
+========================================
+
+fn f() {
+        a
+  b
+}
+c
+
+----------------------------------------
+
+(source_file
+  (function_definition
+    (identifier)
+    (parameters)
+    (block
+      (expression_statement
+        (identifier))
+      (expression_statement
+        (identifier))))
+  (expression_statement
+    (identifier)))
+
+========================================
+layout: backslash continues a line
+========================================
+
+x := 1 + \
+  2
+
+----------------------------------------
+
+(source_file
+  (assignment
+    (identifier)
+    (binary_expression
+      (integer)
+      (integer))))
+
+========================================
+layout: semicolons separate statements
+========================================
+
+a; b;
+c
+
+----------------------------------------
+
+(source_file
+  (expression_statement
+    (identifier))
+  (expression_statement
+    (identifier))
+  (expression_statement
+    (identifier)))
+
+========================================
+strings: raw, multiline, escapes
+========================================
+
+a := R"tag(x)y)tag"
+b := """one
+two"""
+c := "a\n\"b"
+
+----------------------------------------
+
+(source_file
+  (assignment
+    (identifier)
+    (raw_string))
+  (assignment
+    (identifier)
+    (string))
+  (assignment
+    (identifier)
+    (string
+      (string_content)
+      (escape_sequence)
+      (escape_sequence)
+      (string_content))))
+
+========================================
+literals: numbers and symbols
+========================================
+
+a := 0xdead_beef
+b := 1_000
+c := 1e-9
+d := 4.
+e := 'name
+f := '<=>
+g := \newline
+
+----------------------------------------
+
+(source_file
+  (assignment
+    (identifier)
+    (integer))
+  (assignment
+    (identifier)
+    (integer))
+  (assignment
+    (identifier)
+    (float))
+  (assignment
+    (identifier)
+    (float))
+  (assignment
+    (identifier)
+    (symbol))
+  (assignment
+    (identifier)
+    (symbol))
+  (assignment
+    (identifier)
+    (character)))
+
+========================================
+definitions: fn, co, class, slot
+========================================
+
+fn [a, b] m(x: int = 1, *r, **k) -> int:
+    return x
+co g(<- int, a):
+    yield a
+class C(B):
+    slot s: str = "x" with:
+        getter = undefined
+        setter = fn (v) { this.s = v; }
+
+----------------------------------------
+
+(source_file
+  (function_definition
+    (class_target
+      (identifier)
+      (identifier))
+    (identifier)
+    (parameters
+      (parameter
+        (identifier)
+        (type_constraint
+          (type_atom
+            (identifier)))
+        (integer))
+      (var_positional
+        (identifier))
+      (var_keyword
+        (identifier)))
+    (type_constraint
+      (type_atom
+        (identifier)))
+    (block
+      (expression_statement
+        (return_expression
+          (identifier)))))
+  (coroutine_definition
+    (identifier)
+    (parameters
+      (send_type
+        (type_constraint
+          (type_atom
+            (identifier))))
+      (parameter
+        (identifier)))
+    (block
+      (expression_statement
+        (yield_expression
+          (identifier)))))
+  (class_definition
+    (identifier)
+    (arguments
+      (identifier))
+    (block
+      (slot_definition
+        (identifier)
+        (type_constraint
+          (type_atom
+            (identifier)))
+        (string
+          (string_content))
+        (slot_options
+          (slot_option
+            (undefined))
+          (slot_option
+            (lambda
+              (parameters
+                (parameter
+                  (identifier)))
+              (block
+                (assignment
+                  (attribute
+                    (this)
+                    (identifier))
+                  (identifier))))))))))
+
+========================================
+decorators: definition and expression
+========================================
+
+@a @b(1) fn f():
+    pass
+x := @d 3
+
+----------------------------------------
+
+(source_file
+  (decorated_definition
+    (decorator
+      (identifier))
+    (decorated_definition
+      (decorator
+        (identifier)
+        (arguments
+          (integer)))
+      (function_definition
+        (identifier)
+        (parameters)
+        (block
+          (expression_statement
+            (pass))))))
+  (assignment
+    (identifier)
+    (decorated_expression
+      (decorator
+        (identifier))
+      (integer))))
+
+========================================
+imports: every form
+========================================
+
+import a::b
+import a::b as c
+import a::(b, c as d)
+import a::* except (b)
+import static a::b
+from a import b
+
+----------------------------------------
+
+(source_file
+  (import_statement
+    (import_path
+      (identifier)
+      (identifier)))
+  (import_statement
+    (import_path
+      (identifier)
+      (identifier))
+    (identifier))
+  (import_statement
+    (import_path
+      (identifier))
+    (import_items
+      (import_item
+        (identifier))
+      (import_item
+        (identifier)
+        (identifier))))
+  (import_statement
+    (import_path
+      (identifier))
+    (except_names
+      (identifier)))
+  (import_statement
+    (import_path
+      (identifier)
+      (identifier)))
+  (from_import_statement
+    (import_path
+      (identifier))
+    (import_item
+      (identifier))))
+
+========================================
+expressions: messages, scope, operators
+========================================
+
+obj!m(1)
+(a, b) ! draw()
+x := a.b(c)[0] ** -2
+y := a is not int
+z := k not in v
+
+----------------------------------------
+
+(source_file
+  (expression_statement
+    (message
+      (identifier)
+      (identifier)
+      (arguments
+        (integer))))
+  (expression_statement
+    (message
+      (tuple
+        (identifier)
+        (identifier))
+      (identifier)
+      (arguments)))
+  (assignment
+    (identifier)
+    (binary_expression
+      (subscript
+        (call
+          (attribute
+            (identifier)
+            (identifier))
+          (arguments
+            (identifier)))
+        (integer))
+      (unary_expression
+        (integer))))
+  (assignment
+    (identifier)
+    (comparison
+      (identifier)
+      (type_constraint
+        (type_atom
+          (identifier)))))
+  (assignment
+    (identifier)
+    (comparison
+      (identifier)
+      (identifier))))
+
+========================================
+assignment: tuples and declarations
+========================================
+
+var a: int, b = 1, 2
+x, y = y, x
+k ?= 4
+static n: int = 0
+
+----------------------------------------
+
+(source_file
+  (var_statement
+    (var_target
+      (identifier)
+      (type_constraint
+        (type_atom
+          (identifier))))
+    (var_target
+      (identifier))
+    (tuple_expression
+      (integer)
+      (integer)))
+  (assignment
+    (tuple_expression
+      (identifier)
+      (identifier))
+    (tuple_expression
+      (identifier)
+      (identifier)))
+  (assignment
+    (identifier)
+    (integer))
+  (static_statement
+    (identifier)
+    (type_constraint
+      (type_atom
+        (identifier)))
+    (integer)))
+
+========================================
+errors: valid code around a stray token still parses
+:error
+========================================
+
+a := 1
+b := (
+c := 2
+
+----------------------------------------
+
+
